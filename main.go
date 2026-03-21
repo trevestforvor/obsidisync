@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
+	"time"
 
 	"golang.org/x/net/webdav"
 )
@@ -47,8 +51,30 @@ func main() {
 
 	mux := buildMux(vaultRoot, token)
 
-	log.Printf("obsidisync starting on %s (vault_root=%s)", listenAddr, vaultRoot)
-	if err := http.ListenAndServe(listenAddr, mux); err != nil {
-		log.Fatalf("server error: %v", err)
+	srv := &http.Server{
+		Addr:    listenAddr,
+		Handler: mux,
 	}
+
+	// Graceful shutdown on SIGTERM/SIGINT
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		log.Printf("obsidisync starting on %s (vault_root=%s)", listenAddr, vaultRoot)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("server error: %v", err)
+		}
+	}()
+
+	<-done
+	log.Println("shutting down...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("shutdown error: %v", err)
+	}
+	log.Println("stopped")
 }
