@@ -6,5 +6,5 @@ userspace:
   appCache: ""
   userData: ""
 image:
-  repository: "ghcr.io/treve/obsidisync"
+  repository: "ghcr.io/trevestforvor/obsidisync"
   tag: "0.1.0"
