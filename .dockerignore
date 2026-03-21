@@ -1,0 +1,6 @@
+.git/
+docs/
+obsidisync/
+*.tgz
+*.exe
+.github/
