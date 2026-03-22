@@ -23,6 +23,7 @@ func buildMux(vaultRoot, token string) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.Handle("/", NewIndexHandler())
 	mux.Handle("/api/health", NewHealthHandler(vaultRoot))
+	mux.Handle("/api/token", NewTokenHandler(token))
 	mux.Handle("/dav/", NewAuthMiddleware(token, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.URL.Path, "..") {
 			http.Error(w, "Forbidden", http.StatusForbidden)
